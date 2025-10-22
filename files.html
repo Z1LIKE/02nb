@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#1e90ff" />
+  <link rel="icon" type="image/png" href="photo/logo.png?v=3" sizes="any" />
+  <link rel="icon" type="image/png" href="photo/logo-32.png?v=3" sizes="32x32" />
+  <link rel="icon" type="image/png" href="photo/logo-16.png?v=3" sizes="16x16" />
+  <link rel="apple-touch-icon" href="photo/logo-180.png?v=3" />
+  <link rel="shortcut icon" type="image/x-icon" href="favicon.ico?v=3" />
+  <title>Файлы — Автокаталог материалов</title>
+  <style>
+    :root{ --brand:#1e90ff; --ink:#e5e7eb; --muted:#9ca3af; --bg:#0f172a; --card:#1e293b; --radius:16px; --line:#334155; }
+    html,body{height:100%}
+    body{font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", sans-serif; background:var(--bg); margin:0; color:var(--ink); -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; font-size:clamp(14px, 1.7vw, 16px)}
+
+    header{position:sticky; top:0; z-index:10; background:linear-gradient(0deg, var(--brand), #2563eb); color:#fff; padding: calc(env(safe-area-inset-top) + clamp(10px, 2.2vw, 18px)) clamp(10px, 2.2vw, 18px) clamp(10px, 2.2vw, 18px); text-align:center; box-shadow:0 2px 10px rgba(0,0,0,.4); display:flex; align-items:center; justify-content:center; gap:10px; -webkit-user-select:none; user-select:none}
+    header *{-webkit-user-select:none; user-select:none}
+    header img.logo{height: clamp(28px, 6vw, 48px); width:auto; vertical-align:middle; border-radius:6px; -webkit-user-drag:none; user-drag:none; pointer-events:auto}
+    header h1{margin:0; font-weight:800; letter-spacing:.2px; font-size:clamp(18px, 4.5vw, 26px); display:inline-flex; align-items:center; gap:8px}
+
+    /* === Drawer (левое меню) === */
+    .menu-btn{position:absolute; left:12px; top:50%; transform:translateY(-50%); appearance:none; border:none; background:rgba(2,6,23,.25); color:#fff; border:1px solid rgba(255,255,255,.2); padding:10px 12px; border-radius:10px; cursor:pointer; font-size:16px; line-height:1}
+    .menu-btn:active{transform:translateY(-50%) scale(.98)}
+    .drawer{position:fixed; inset:0 auto 0 0; width:min(88vw, 320px); background:#0b1220; border-right:1px solid var(--line); transform:translateX(-100%); transition:transform .28s ease; z-index:1000; display:flex; flex-direction:column; padding:12px}
+    .drawer.open{transform:translateX(0)}
+    .drawer header{position:relative; background:transparent; box-shadow:none; padding:6px 6px 12px; justify-content:flex-start; gap:8px}
+    .drawer-title{font-weight:800; color:#e5e7eb; margin-left:6px}
+    .drawer a{display:flex; align-items:center; gap:10px; padding:12px; border-radius:10px; text-decoration:none; color:#e5e7eb; border:1px solid transparent}
+    .drawer a:hover{background:#111827; border-color:#1f2937}
+    .drawer .icon{width:18px; text-align:center}
+    .backdrop{position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:900; opacity:0; transition:opacity .2s ease}
+    .backdrop.show{opacity:1}
+
+    .toc{background:rgba(30,41,59,0.95); box-shadow:0 2px 10px rgba(0,0,0,.3)}
+    .toc-inner{max-width:1100px; margin:0 auto; padding:10px clamp(12px, 2.8vw, 24px); display:flex; gap:8px; overflow:auto; -webkit-overflow-scrolling:touch; scroll-snap-type:x mandatory}
+    .chip{white-space:nowrap; display:inline-block; border:1px solid var(--line); padding:10px 14px; border-radius:999px; font-size:14px; color:#f1f5f9; background:#1e293b; text-decoration:none; transition:.2s; scroll-snap-align:start}
+    .chip:hover{background:#334155}
+
+    .container{max-width:1100px; margin: clamp(12px, 3vw, 30px) auto; background:var(--card); border-radius:var(--radius); padding: clamp(12px, 3.2vw, 30px); box-shadow:0 4px 20px rgba(0,0,0,.5)}
+    .topbar{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:12px}
+    .search{flex:1; min-width:220px}
+    .search input{width:100%; padding:12px 14px; border-radius:12px; border:1px solid var(--line); background:#0b1220; color:#cbd5e1}
+
+    h2{color:#ffffff; font-size:clamp(18px, 3.8vw, 22px); margin:0}
+    .crumbs{color:#cbd5e1; font-size:clamp(12px, 2.8vw, 14px)}
+
+    .files{margin-top:14px; border:1px solid var(--line); border-radius:12px; overflow:hidden}
+    .row{display:grid; grid-template-columns:28px 1fr 120px 140px 120px; gap:10px; align-items:center; padding:14px 14px; border-top:1px solid var(--line); background:rgba(2,6,23,0.12)}
+    .row.head{border-top:none; background:rgba(2,6,23,0.24); font-size:12px; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em}
+    .row.item{background:rgba(2,6,23,0.08)}
+    .row.item:hover{background:rgba(2,6,23,0.18)}
+    .name{display:flex; align-items:center; gap:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+    .name a{color:inherit; text-decoration:none; display:inline-block; padding:6px 0}
+    .tag{font-size:12px; border:1px solid var(--line); padding:2px 6px; border-radius:999px; color:#cbd5e1}
+    .actions{display:flex; gap:8px; flex-wrap:wrap}
+    .btn{display:inline-flex; align-items:center; gap:6px; padding:12px 12px; border-radius:12px; border:1px solid var(--line); background:#0b1220; color:#cbd5e1; text-decoration:none; font-size:14px; touch-action:manipulation}
+    .btn:hover{border-color:#64748b}
+    .muted{color:#94a3b8}
+    .empty{display:flex; align-items:center; gap:8px; color:#94a3b8}
+
+    @media (max-width: 800px){ .row{grid-template-columns:28px 1fr 110px 120px} .col-size{display:none} }
+    @media (max-width: 560px){ .topbar{gap:6px} .search{min-width:unset; width:100%} .row{grid-template-columns:28px 1fr; grid-template-rows:auto auto} .col-commit{display:none} .actions{grid-column:1 / -1; margin-top:8px} .btn{flex:1 1 auto; justify-content:center} }
+    @media (max-width: 380px){ header h1{font-size:clamp(16px, 5vw, 20px)} .chip{padding:10px 12px; font-size:13px} .btn{padding:10px} .row{padding:12px} }
+
+    footer{max-width:1100px; margin: 10px auto calc(env(safe-area-inset-bottom) + 24px); color:var(--muted); text-align:center; font-size:13px}
+  </style>
+</head>
+<body>
+  <header>
+    <button class="menu-btn" id="menuBtn" aria-label="Открыть меню" aria-controls="drawer" aria-expanded="false">☰</button>
+    <h1>
+      <img src="photo/logo.png" alt="Логотип" class="logo" draggable="false" ondragstart="return false" oncontextmenu="return false" />
+      Файлы
+    </h1>
+  </header>
+
+  <!-- Drawer -->
+  <aside class="drawer" id="drawer" aria-hidden="true" tabindex="-1">
+    <header>
+      <img src="photo/logo.png" alt="" class="logo" style="height:28px;width:auto;border-radius:6px"/>
+      <div class="drawer-title">Навигация</div>
+    </header>
+    <nav>
+      <a href="index.html"><span class="icon">🏠</span>Главная</a>
+      <a href="teachers.html"><span class="icon">👩‍🏫</span>Преподаватели</a>
+      <a href="files.html" aria-current="page"><span class="icon">📁</span>Файлы</a>
+    </nav>
+  </aside>
+  <div class="backdrop" id="backdrop" hidden></div>
+
+  <!-- Chips -->
+  <nav class="toc" aria-label="Быстрые папки">
+    <div class="toc-inner" id="chips"></div>
+  </nav>
+
+  <main class="container">
+    <div class="topbar">
+      <h2>Каталог</h2>
+      <div class="crumbs" id="crumbs">/</div>
+      <div class="search"><input id="search" type="search" placeholder="Поиск по имени в текущей папке…" /></div>
+      <a id="toggleDates" class="btn" href="#">⏱ Показать даты</a>
+    </div>
+
+    <div class="files" id="grid">
+      <div class="row head"><div></div><div>Имя</div><div class="col-size">Размер</div><div class="col-commit">Изменён</div><div>Действия</div></div>
+      <div class="rows" id="rows"></div>
+    </div>
+  </main>
+
+  <footer>
+    Made by Z1LIKE
+  </footer>
+
+  <script>
+    // ==== Конфиг репозитория ====
+    const CONFIG = {
+      owner: "your-github-username",
+      repo: "your-repo-name",
+      branch: "main",
+      // КЛЮЧЕВОЕ: все файлы будут искаться внутри папки DOCX
+      // Если у тебя GitHub Pages из /docs, поставь "docs/DOCX"
+      rootPath: "Files",
+      showCommitDates: false,
+    };
+    const GITHUB_TOKEN = null;
+
+    // ==== Утилиты ====
+    const $ = s => document.querySelector(s);
+    const $$ = s => Array.from(document.querySelectorAll(s));
+    const fmtBytes = (n) => n == null ? "—" : (n < 1024 ? `${n} B` : n < 1024**2 ? `${(n/1024).toFixed(1)} KB` : n < 1024**3 ? `${(n/1024**2).toFixed(1)} MB` : `${(n/1024**3).toFixed(1)} GB`);
+    const fmtDate = (iso) => iso ? new Date(iso).toLocaleString() : "—";
+    const icon = (type, name) => type === 'dir' ? '📂' : /\.(pdf)$/i.test(name) ? '📄' : /\.(docx?|xlsx?|pptx?)$/i.test(name) ? '🗎' : /\.(png|jpe?g|gif|webp|svg)$/i.test(name) ? '🖼️' : /\.(mp4|mov|webm|mkv)$/i.test(name) ? '🎞️' : /\.(mp3|wav|flac|m4a|ogg)$/i.test(name) ? '🎵' : '📄';
+    const api = async (path, params={}) => { const url = new URL(`https://api.github.com${path}`); Object.entries(params).forEach(([k,v])=> url.searchParams.set(k,v)); const headers = { 'Accept':'application/vnd.github+json' }; if (GITHUB_TOKEN) headers['Authorization'] = `Bearer ${GITHUB_TOKEN}`; const res = await fetch(url, { headers }); if (!res.ok) { let msg = `${res.status} ${res.statusText}`; try { const t = await res.json(); if (t?.message) msg += `: ${t.message}` } catch {} throw new Error(msg); } return res.json(); };
+
+    const pathFromHash = () => decodeURIComponent(location.hash.replace(/^#\/?/, ''));
+    const setHash = (p) => { location.hash = `/${encodeURIComponent(p)}`; };
+
+    function renderCrumbs(path){ const segs = path.split('/').filter(Boolean); $('#crumbs').innerHTML = segs.length? segs.map((s,i)=> i===0?`/${s}`:` / ${s}`).join('') : '/'; }
+
+    function renderChips(path, items){ const dirs = items.filter(x=> x.type==='dir'); const head = `<a class="chip" href="#" data-nav="${path}">📁 Папки:</a>`; const chips = dirs.map(d=> `<a class="chip" href="#" data-nav="${[path,d.name].filter(Boolean).join('/')}" title="Открыть папку">${d.name}</a>`).join(''); $('#chips').innerHTML = dirs.length ? head + ' ' + chips : ''; $$('#chips a[data-nav]').forEach(a=> a.addEventListener('click', (e)=>{ e.preventDefault(); setHash(a.dataset.nav); })); }
+
+    async function list(path=""){ const repoPath = [CONFIG.rootPath, path].filter(Boolean).join('/'); let items; try{ items = await api(`/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${encodeURIComponent(repoPath)}`, { ref: CONFIG.branch }); } catch(e){ $('#rows').innerHTML = `<div class='row item'><div>⚠️</div><div class='empty'>${e.message}</div><div class='col-size'>—</div><div class='col-commit'>—</div><div></div></div>`; return; }
+      renderCrumbs(path);
+      items.sort((a,b)=> (a.type===b.type ? a.name.localeCompare(b.name) : a.type==='dir' ? -1 : 1));
+      renderChips(path, items);
+
+      let commitMap = {};
+      if (CONFIG.showCommitDates) {
+        await Promise.all(items.map(async it=>{ const fullPath = [repoPath, it.name].filter(Boolean).join('/'); try{ const [c] = await api(`/repos/${CONFIG.owner}/${CONFIG.repo}/commits`, { path: fullPath, sha: CONFIG.branch, per_page: 1 }); commitMap[it.name] = c ? c.commit.author.date : null; } catch{ commitMap[it.name] = null; } }));
+      }
+
+      const rows = items.map(it=>{ const isDir = it.type === 'dir'; const last = CONFIG.showCommitDates ? fmtDate(commitMap[it.name]) : '—'; const openAttr = isDir ? `href="#" data-open="${[path, it.name].filter(Boolean).join('/')}"` : `href="${it.download_url}" target="_blank" rel="noopener"`; return `
+        <div class="row item" data-name="${it.name.toLowerCase()}">
+          <div>${icon(it.type, it.name)}</div>
+          <div class="name"><a ${openAttr}>${it.name}</a> ${isDir?'<span class="tag">папка</span>':'<span class="tag">файл</span>'}</div>
+          <div class="col-size">${isDir ? '—' : fmtBytes(it.size)}</div>
+          <div class="col-commit">${last}</div>
+          <div class="actions">
+            ${isDir ? `<a class="btn" href="#" data-open="${[path, it.name].filter(Boolean).join('/')}">Открыть</a>` : `<a class="btn" href="${it.download_url}" target="_blank" rel="noopener">Скачать</a>`}
+            <a class="btn" href="${it.html_url}" target="_blank" rel="noopener">На GitHub</a>
+          </div>
+        </div>`; }).join('');
+
+      $('#rows').innerHTML = rows || `<div class="row item"><div>🤷‍♀️</div><div class="name">Пусто</div><div class="col-size">—</div><div class="col-commit">—</div><div></div></div>`;
+      $$('#rows [data-open]').forEach(a=> a.addEventListener('click', (e)=>{ e.preventDefault(); setHash(a.dataset.open); })); }
+
+    // Поиск
+    $('#search').addEventListener('input', e=>{ const q = e.target.value.trim().toLowerCase(); $$('#rows .row.item').forEach(r=>{ const name=(r.getAttribute('data-name')||'').toLowerCase(); r.style.display=name.includes(q)?'':''; }); });
+
+    // Переключение дат
+    $('#toggleDates').addEventListener('click', async (e)=>{ e.preventDefault(); CONFIG.showCommitDates = !CONFIG.showCommitDates; e.currentTarget.textContent = CONFIG.showCommitDates ? '⏱ Скрыть даты' : '⏱ Показать даты'; await list(pathFromHash()); });
+
+    // Роутинг
+    window.addEventListener('hashchange', ()=> list(pathFromHash()));
+
+    // Drawer logic
+    (function(){ const btn = document.getElementById('menuBtn'); const drawer = document.getElementById('drawer'); const backdrop = document.getElementById('backdrop'); const focusable = () => drawer.querySelectorAll('a,button,[tabindex]:not([tabindex="-1"])'); const open = () => { drawer.classList.add('open'); drawer.setAttribute('aria-hidden','false'); btn.setAttribute('aria-expanded','true'); backdrop.hidden = false; backdrop.classList.add('show'); setTimeout(()=>{ const f = focusable()[0]; f && f.focus(); }, 10); }; const close = () => { drawer.classList.remove('open'); drawer.setAttribute('aria-hidden','true'); btn.setAttribute('aria-expanded','false'); backdrop.classList.remove('show'); setTimeout(()=>{ backdrop.hidden = true; }, 200); btn.focus(); }; btn?.addEventListener('click', (e)=>{ e.preventDefault(); drawer.classList.contains('open')? close(): open(); }); backdrop?.addEventListener('click', close); drawer?.addEventListener('keydown', (e)=>{ if(e.key==='Escape') close(); }); drawer?.querySelectorAll('a').forEach(a=> a.addEventListener('click', close)); let startX=null; drawer?.addEventListener('touchstart', e=>{ startX=e.touches[0].clientX; }, {passive:true}); drawer?.addEventListener('touchmove', e=>{ if(startX!=null){ const dx=e.touches[0].clientX-startX; if(dx<-50){ close(); startX=null; } } }, {passive:true}); window.addEventListener('keydown', e=>{ if(e.key==='Escape' && drawer.classList.contains('open')) close(); }); })();
+
+    // Старт
+    (async ()=>{ await list(pathFromHash()); })();
+  </script>
+</body>
+</html>
